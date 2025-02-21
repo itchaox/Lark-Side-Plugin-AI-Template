@@ -11,6 +11,7 @@
     "@lark-base-open/js-sdk": "https://lf3-static.bytednsdoc.com/obj/eden-cn/jjjpceh7nulojvhj/@lark-base-open-js-sdk-0.4.1-rc.7.tgz",
     "@mapbox/node-pre-gyp": "^1.0.11",
     "element-plus": "^2.3.6",
+    "markdown-it": "^14.1.0",
     "node-opencc": "^2.0.1",
     "reset-css": "^5.0.1",
     "vue": "^3.2.37",
