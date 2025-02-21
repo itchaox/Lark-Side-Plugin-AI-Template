@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 16:17
+ * @LastTime   : 2025-02-21 16:23
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -12,6 +12,7 @@
 
   import opencc from 'node-opencc';
   import { ElMessage, ElButton } from 'element-plus';
+  import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
   import MarkdownIt from 'markdown-it';
 
   // 目标格式 s 简体; t 繁体
@@ -397,10 +398,10 @@
       <div class="header-content">
         <div class="cell-info">
           <span
-            >当前字段：<strong>{{ currentFieldName }}</strong></span
+            >当前字段：<strong style="color: #2955e7">{{ currentFieldName }}</strong></span
           >
           <span
-            >当前行号：<strong>{{ currentRecordIndex + 1 }}</strong></span
+            >当前行号：<strong style="color: #2955e7">{{ currentRecordIndex + 1 }}</strong></span
           >
         </div>
         <div class="navigation-buttons">
@@ -408,14 +409,17 @@
             @click="switchRecord('prev')"
             :disabled="!currentValue"
           >
+            <el-icon style="font-size: 16px; font-weight: bold"><ArrowLeft /></el-icon>
             <span class="material-icons">上一个</span>
           </el-button>
           <el-button
             type="primary"
             @click="switchRecord('next')"
             :disabled="!currentValue"
+            style="--el-button-bg-color: #2955e7; --el-button-border-color: #2955e7"
           >
             <span class="material-icons">下一个</span>
+            <el-icon style="font-size: 16px; font-weight: bold"><ArrowRight /></el-icon>
           </el-button>
         </div>
       </div>
@@ -433,7 +437,7 @@
       v-else
       class="empty-state"
     >
-      <div class="empty-message">请选择一个<span style="color: #1456f0;">单元格</span>以预览 Markdown 内容</div>
+      <div class="empty-message">请选择一个<span style="color: #2955e7">单元格</span>以预览 Markdown 内容</div>
     </div>
   </div>
 </template>
