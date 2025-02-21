@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 17:04
+ * @LastTime   : 2025-02-21 17:21
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -445,7 +445,17 @@
       v-else
       class="empty-state"
     >
-      <div class="empty-message">{{ $t('preview.empty_state') }}</div>
+      <div class="empty-message">
+        <span>
+          {{ $t('preview.empty_state1') }}
+        </span>
+        <span style="color: #2955e7">
+          {{ $t('preview.empty_state2') }}
+        </span>
+        <span>
+          {{ $t('preview.empty_state3') }}
+        </span>
+      </div>
     </div>
   </div>
 </template>

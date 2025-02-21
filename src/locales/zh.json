@@ -1,7 +1,9 @@
 {
   "title": "标题",
   "preview": {
-    "empty_state": "请选择一个单元格以预览 Markdown 内容",
+    "empty_state1": "请选择一个",
+    "empty_state2": "单元格",
+    "empty_state3": "以预览 Markdown 内容",
     "current_field": "当前字段",
     "current_row": "当前行号",
     "navigation": {

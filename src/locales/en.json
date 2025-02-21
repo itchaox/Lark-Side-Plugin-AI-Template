@@ -1,7 +1,9 @@
 {
   "title": "Title",
   "preview": {
-    "empty_state": "Please select a cell to preview Markdown content",
+    "empty_state1": "Please select a",
+    "empty_state2": "cell",
+    "empty_state3": "to preview Markdown content",
     "current_field": "Current Field",
     "current_row": "Current Row",
     "navigation": {
