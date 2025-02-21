@@ -9,6 +9,14 @@
     "navigation": {
       "prev": "上一个",
       "next": "下一个"
+    },
+    "mode": {
+      "normal": "普通预览",
+      "ai": "AI 问答"
+    },
+    "ai_chat": {
+      "question_field": "问题字段",
+      "answer_field": "回答字段"
     }
   }
 }

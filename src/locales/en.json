@@ -9,6 +9,14 @@
     "navigation": {
       "prev": "Previous",
       "next": "Next"
+    },
+    "mode": {
+      "normal": "Normal Preview",
+      "ai": "AI Chat"
+    },
+    "ai_chat": {
+      "question_field": "Question Field",
+      "answer_field": "Answer Field"
     }
   }
 }

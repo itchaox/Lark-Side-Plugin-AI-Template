@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 17:21
+ * @LastTime   : 2025-02-21 22:04
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -17,6 +17,9 @@
 
   import { useI18n } from 'vue-i18n';
   const { t } = useI18n();
+
+  // 预览模式：normal 普通预览; ai AI问答
+  const previewMode = ref('normal');
 
   // 目标格式 s 简体; t 繁体
   const target = ref('t');
@@ -52,6 +55,16 @@
   onMounted(async () => {
     databaseList.value = await base.getTableMetaList();
     await updateRecordIds();
+
+    // 获取当前视图的字段列表
+    const selection = await base.getSelection();
+    if (selection.tableId && selection.viewId) {
+      const table = await base.getTable(selection.tableId);
+      const view = await table.getViewById(selection.viewId);
+      const _list = await view.getFieldMetaList();
+      // 只展示文本相关字段
+      fieldList.value = _list.filter((item) => item.type === 1);
+    }
   });
 
   async function updateRecordIds() {
@@ -67,30 +80,42 @@
 
   async function switchRecord(direction) {
     if (!currentFieldId.value || recordIds.value.length === 0) return;
-
+  
     const currentIndex = recordIds.value.findIndex((id) => id === recordId.value);
     if (currentIndex === -1) return;
-
+  
     let newIndex;
     if (direction === 'prev') {
       newIndex = currentIndex > 0 ? currentIndex - 1 : recordIds.value.length - 1;
     } else {
       newIndex = currentIndex < recordIds.value.length - 1 ? currentIndex + 1 : 0;
     }
-
+  
     recordId.value = recordIds.value[newIndex];
     currentRecordIndex.value = newIndex;
-
+  
     const table = await base.getActiveTable();
-    const data = await table.getCellValue(currentFieldId.value, recordId.value);
-    if (data && data[0]) {
-      currentValue.value = data[0].text;
-      parsedContent.value = md.render(data[0].text || '');
-      // 重置预览区域的滚动位置到顶部
-      const previewContent = document.querySelector('.cell-preview');
-      if (previewContent) {
-        previewContent.scrollTop = 0;
+    
+    if (previewMode.value === 'ai' && questionFieldId.value && answerFieldId.value) {
+      // AI 问答模式：获取问题和回答内容
+      const questionData = await table.getCellValue(questionFieldId.value, recordId.value);
+      const answerData = await table.getCellValue(answerFieldId.value, recordId.value);
+      
+      questionContent.value = questionData?.[0]?.text || '';
+      parsedAnswerContent.value = md.render(answerData?.[0]?.text || '');
+    } else {
+      // 普通预览模式
+      const data = await table.getCellValue(currentFieldId.value, recordId.value);
+      if (data && data[0]) {
+        currentValue.value = data[0].text;
+        parsedContent.value = md.render(data[0].text || '');
       }
+    }
+
+    // 重置预览区域的滚动位置到顶部
+    const previewContent = document.querySelector('.cell-preview');
+    if (previewContent) {
+      previewContent.scrollTop = 0;
     }
   }
 
@@ -156,6 +181,8 @@
   const parsedContent = ref('');
 
   const currentFieldName = ref('');
+  const questionContent = ref('');
+  const parsedAnswerContent = ref('');
 
   base.onSelectionChange(async (event) => {
     // 获取点击的字段id和记录id
@@ -169,23 +196,38 @@
     const table = await base.getActiveTable();
     if (currentFieldId.value && recordId.value) {
       try {
-        // 获取字段名称
-        const field = await table.getFieldById(currentFieldId.value);
-        const fieldMeta = await field.getMeta();
-        currentFieldName.value = fieldMeta.name || '未知字段';
+        if (previewMode.value === 'ai' && questionFieldId.value && answerFieldId.value) {
+          // AI 问答模式：获取问题和回答内容
+          const questionData = await table.getCellValue(questionFieldId.value, recordId.value);
+          const answerData = await table.getCellValue(answerFieldId.value, recordId.value);
+          
+          questionContent.value = questionData?.[0]?.text || '';
+          parsedAnswerContent.value = md.render(answerData?.[0]?.text || '');
+          
+          // 获取当前字段名称
+          const field = await table.getFieldById(currentFieldId.value);
+          const fieldMeta = await field.getMeta();
+          currentFieldName.value = fieldMeta.name || '未知字段';
+        } else {
+          // 普通预览模式
+          // 获取字段名称
+          const field = await table.getFieldById(currentFieldId.value);
+          const fieldMeta = await field.getMeta();
+          currentFieldName.value = fieldMeta.name || '未知字段';
 
-        // 修改当前数据
-        let data = await table.getCellValue(currentFieldId.value, recordId.value);
-        if (data && data[0] && data[0].text !== currentValue.value) {
-          currentValue.value = data[0].text;
-          // 解析 Markdown 内容
-          parsedContent.value = md.render(data[0].text || '');
-        }
+          // 修改当前数据
+          let data = await table.getCellValue(currentFieldId.value, recordId.value);
+          if (data && data[0] && data[0].text !== currentValue.value) {
+            currentValue.value = data[0].text;
+            // 解析 Markdown 内容
+            parsedContent.value = md.render(data[0].text || '');
+          }
 
-        // 更新当前行号
-        const currentIndex = recordIds.value.findIndex((id) => id === recordId.value);
-        if (currentIndex !== -1) {
-          currentRecordIndex.value = currentIndex;
+          // 更新当前行号
+          const currentIndex = recordIds.value.findIndex((id) => id === recordId.value);
+          if (currentIndex !== -1) {
+            currentRecordIndex.value = currentIndex;
+          }
         }
       } catch (error) {
         console.error('获取字段信息失败:', error);
@@ -395,10 +437,73 @@
 
     return newValue;
   }
+  // 问题字段和回答字段
+  const questionFieldId = ref('');
+  const answerFieldId = ref('');
+  const questionFieldName = ref('');
+  const answerFieldName = ref('');
+
+  // 获取字段名称
+  async function getFieldName(fieldId) {
+    if (!fieldId) return '';
+    const table = await base.getActiveTable();
+    const field = await table.getFieldById(fieldId);
+    const fieldMeta = await field.getMeta();
+    return fieldMeta.name || '';
+  }
+
+  // 监听问题字段变化
+  watch(questionFieldId, async (newValue) => {
+    questionFieldName.value = await getFieldName(newValue);
+  });
+
+  // 监听回答字段变化
+  watch(answerFieldId, async (newValue) => {
+    answerFieldName.value = await getFieldName(newValue);
+  });
 </script>
 
 <template>
   <div class="markdown-preview">
+    <div class="mode-switch">
+      <el-radio-group
+        v-model="previewMode"
+        size="small"
+      >
+        <el-radio-button label="normal">{{ $t('preview.mode.normal') }}</el-radio-button>
+        <el-radio-button label="ai">{{ $t('preview.mode.ai') }}</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <div
+      v-if="previewMode === 'ai'"
+      class="field-selectors"
+    >
+      <el-select
+        v-model="questionFieldId"
+        :placeholder="$t('preview.ai_chat.question_field')"
+        class="field-selector"
+      >
+        <el-option
+          v-for="field in fieldList.filter((field) => field.id !== answerFieldId)"
+          :key="field.id"
+          :label="field.name"
+          :value="field.id"
+        />
+      </el-select>
+      <el-select
+        v-model="answerFieldId"
+        :placeholder="$t('preview.ai_chat.answer_field')"
+        class="field-selector"
+      >
+        <el-option
+          v-for="field in fieldList.filter((field) => field.id !== questionFieldId)"
+          :key="field.id"
+          :label="field.name"
+          :value="field.id"
+        />
+      </el-select>
+    </div>
     <div
       class="header-container"
       v-if="currentValue"
@@ -437,9 +542,23 @@
       v-if="currentValue"
     >
       <div
+        v-if="previewMode === 'normal'"
         class="preview-content"
         v-html="parsedContent"
       ></div>
+      <div
+        v-else
+        class="preview-content ai-chat"
+      >
+        <div class="question-content">
+          <span class="tag question-tag">问题</span>
+          <p>{{ questionContent }}</p>
+        </div>
+        <div class="answer-content">
+          <span class="tag answer-tag">回答</span>
+          <div v-html="parsedAnswerContent"></div>
+        </div>
+      </div>
     </div>
     <div
       v-else
@@ -629,6 +748,58 @@
     margin: 0.6em 0;
     line-height: 1.6;
   }
+
+  .ai-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .question-content,
+  .answer-content {
+    padding: 16px;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  .tag {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .question-tag {
+    background-color: #f2f3f5;
+    color: #1f2329;
+    border-color: #e5e6eb;
+  }
+
+  .answer-tag {
+    background-color: #e8f3ff;
+    color: #2955e7;
+    border-color: #bedaff;
+  }
+
+  .question-content {
+    background-color: #f5f6f7;
+    margin-top: 16px;
+  }
+
+  .answer-content {
+    background-color: #f0f7ff;
+    margin-top: 16px;
+  }
+
+  .question-content p {
+    margin: 0;
+    color: #4e5969;
+    line-height: 1.6;
+  }
 </style>
 
 <style>
@@ -640,5 +811,14 @@
     .el-select-dropdown__item.selected {
       color: rgb(20, 86, 240);
     }
+  }
+  .field-selectors {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .field-selector {
+    width: 200px;
   }
 </style>
