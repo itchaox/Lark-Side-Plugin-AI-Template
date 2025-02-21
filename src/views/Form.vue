@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2024-09-09 13:16
+ * @LastTime   : 2025-02-21 16:00
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -496,7 +496,7 @@
   .preview-content :deep(h4),
   .preview-content :deep(h5),
   .preview-content :deep(h6) {
-    margin: 1.6em 0 0.6em;
+    margin: 0.4em 0 0.4em;
     line-height: 1.4;
     font-weight: 600;
   }
@@ -528,8 +528,8 @@
 
   .preview-content :deep(ul),
   .preview-content :deep(ol) {
-    padding-left: 2em;
-    margin: 1em 0;
+    padding-left: 1em;
+    margin: 0.6em 0;
     list-style-position: outside;
   }
 
@@ -585,7 +585,7 @@
   }
 
   .preview-content :deep(p) {
-    margin: 1em 0;
+    margin: 0.6em 0;
     line-height: 1.6;
   }
 </style>
