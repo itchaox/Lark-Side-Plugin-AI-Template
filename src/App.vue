@@ -1,5 +1,13 @@
+<!--
+ * @Version    : v1../views/Form.vue
+ * @Author     : Wang Chao
+ * @Date       : 2025-02-21 13:44
+ * @LastAuthor : Wang Chao
+ * @LastTime   : 2025-02-21 13:57
+ * @desc       : 
+-->
 <script setup>
-  import Form from './components/Form.vue';
+  import Form from './views/Form.vue';
 </script>
 
 <template>
