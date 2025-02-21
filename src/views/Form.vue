@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 22:04
+ * @LastTime   : 2025-02-22 07:28
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -80,27 +80,27 @@
 
   async function switchRecord(direction) {
     if (!currentFieldId.value || recordIds.value.length === 0) return;
-  
+
     const currentIndex = recordIds.value.findIndex((id) => id === recordId.value);
     if (currentIndex === -1) return;
-  
+
     let newIndex;
     if (direction === 'prev') {
       newIndex = currentIndex > 0 ? currentIndex - 1 : recordIds.value.length - 1;
     } else {
       newIndex = currentIndex < recordIds.value.length - 1 ? currentIndex + 1 : 0;
     }
-  
+
     recordId.value = recordIds.value[newIndex];
     currentRecordIndex.value = newIndex;
-  
+
     const table = await base.getActiveTable();
-    
+
     if (previewMode.value === 'ai' && questionFieldId.value && answerFieldId.value) {
       // AI 问答模式：获取问题和回答内容
       const questionData = await table.getCellValue(questionFieldId.value, recordId.value);
       const answerData = await table.getCellValue(answerFieldId.value, recordId.value);
-      
+
       questionContent.value = questionData?.[0]?.text || '';
       parsedAnswerContent.value = md.render(answerData?.[0]?.text || '');
     } else {
@@ -200,10 +200,10 @@
           // AI 问答模式：获取问题和回答内容
           const questionData = await table.getCellValue(questionFieldId.value, recordId.value);
           const answerData = await table.getCellValue(answerFieldId.value, recordId.value);
-          
+
           questionContent.value = questionData?.[0]?.text || '';
           parsedAnswerContent.value = md.render(answerData?.[0]?.text || '');
-          
+
           // 获取当前字段名称
           const field = await table.getFieldById(currentFieldId.value);
           const fieldMeta = await field.getMeta();
@@ -757,20 +757,24 @@
 
   .question-content,
   .answer-content {
-    padding: 16px;
+    padding: 24px 16px 16px;
     border-radius: 8px;
     position: relative;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 16px;
   }
 
   .tag {
     position: absolute;
-    top: -10px;
+    top: 0px;
     left: 16px;
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
     border: 1px solid;
+    margin: 0;
   }
 
   .question-tag {
@@ -787,12 +791,10 @@
 
   .question-content {
     background-color: #f5f6f7;
-    margin-top: 16px;
   }
 
   .answer-content {
     background-color: #f0f7ff;
-    margin-top: 16px;
   }
 
   .question-content p {
