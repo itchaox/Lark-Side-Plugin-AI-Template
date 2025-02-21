@@ -83,6 +83,11 @@
     if (data && data[0]) {
       currentValue.value = data[0].text;
       parsedContent.value = md.render(data[0].text || '');
+      // 重置预览区域的滚动位置到顶部
+      const previewContent = document.querySelector('.cell-preview');
+      if (previewContent) {
+        previewContent.scrollTop = 0;
+      }
     }
   }
 
@@ -493,6 +498,7 @@
     flex: 1;
     overflow-y: auto;
     min-height: 0;
+    scroll-behavior: smooth;
   }
 
   .empty-state {
