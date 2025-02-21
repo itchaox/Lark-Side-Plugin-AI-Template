@@ -1,793 +1,456 @@
 <!--
  * @Version    : v1.00
  * @Author     : itchaox
- * @Date       : 2023-12-23 09:34
- * @LastAuthor : itchaox
- * @LastTime   : 2024-03-27 22:42
+ * @Date       : 2023-09-26 15:10
+ * @LastAuthor : Wang Chao
+ * @LastTime   : 2024-09-09 13:16
  * @desc       : 
 -->
-
-<script setup lang="ts">
+<script setup>
+  import { onMounted, watch, ref, watchEffect } from 'vue';
   import { bitable } from '@lark-base-open/js-sdk';
-  import { Close, CaretRight, InfoFilled } from '@element-plus/icons-vue';
-  import FieldIcon from './fieldIcon.jsx';
-  import { dayjs } from 'element-plus';
 
-  import { useI18n } from 'vue-i18n';
+  import opencc from 'node-opencc';
+  import { ElMessage } from 'element-plus';
 
-  import QrcodeVue, { Level, RenderAs } from 'qrcode.vue';
+  // 目标格式 s 简体; t 繁体
+  const target = ref('t');
 
-  const { t } = useI18n();
+  // 选择模式 cell 单元格; field 字段; database 数据表
+  const selectModel = ref('cell');
 
-  import { BrowserSafari, PreviewOpen, PreviewClose, DocDetail, CopyLink, EmotionHappy } from '@icon-park/vue-next';
+  const databaseList = ref();
+  const databaseId = ref();
+  const viewList = ref();
+  const viewId = ref();
+  const fieldList = ref();
+  const fieldId = ref();
 
-  const rawUrl = ref('');
+  const isLoading = ref(false);
 
-  import useClipboard from 'vue-clipboard3';
+  const base = bitable.base;
 
-  // FIXME 筛选
-  const groupList = ref([]);
+  // 当前点击字段id
+  const currentFieldId = ref();
+  const recordId = ref();
 
-  const addFilter = async () => {
-    const idsInGroup = groupList.value.map((item) => item.id);
-    const _list = groupFieldList.value.filter((item) => !idsInGroup.includes(item.id));
+  const currentValue = ref();
 
-    if (_list?.[0]) {
-      let { id, name, type } = _list?.[0];
-      let options = [];
+  // 繁体模式 1 正体繁体; 2 台湾繁体; 3 香港繁体
+  const traditionalModel = ref('1');
 
-      if (_list[0]?.type === 3 || _list[0]?.type === 4) {
-        // 单选/多选
-        const selectField = await table.getField(id);
-        options = await selectField.getOptions();
-      }
+  // 地域模式 1 不使用; 2 台湾模式
+  const localModel = ref('1');
 
-      if (_list[0]?.type === 7) {
-        groupList.value.push({
-          name,
-          type,
-          id,
-          isShow: true,
-          value: '1',
-        });
-      } else {
-        groupList.value.push({
-          id,
-          name,
-          type,
-          isShow: true,
-          options,
-          value: '',
-        });
-      }
+  onMounted(async () => {
+    databaseList.value = await base.getTableMetaList();
+  });
+
+  // 切换数据表, 默认选择第一个视图
+  async function databaseChange() {
+    if (selectModel.value === 'field') {
+      const table = await base.getTable(databaseId.value);
+      viewList.value = await table.getViewMetaList();
+      viewId.value = viewList.value[0]?.id;
     }
-  };
+  }
 
-  const filterFiledChange = async (item, index) => {
-    let _activeItem = groupFieldList.value.find((i) => i.id === item.id);
+  // 根据视图列表获取字段列表
+  watch(viewId, async (newValue, oldValue) => {
+    const table = await base.getTable(databaseId.value);
+    const view = await table.getViewById(newValue);
+    const _list = await view.getFieldMetaList();
 
-    // 新增的选项
-    if (!_activeItem) {
-      groupList.value[index] = {
-        name: item?.id,
-        type: 1,
-        id: item?.id,
-        isShow: true,
-        value: '',
-      };
-      return;
-    }
+    // 只展示文本相关字段
+    fieldList.value = _list.filter((item) => item.type === 1);
+  });
 
-    // 修改
-    if (_activeItem?.type === 3 || _activeItem?.type === 4) {
-      // 单选/多选
-      const selectField = await table.getField(item.id);
-      let options = await selectField.getOptions();
+  // 切换选择模式时,重置选择
+  watch(selectModel, async (newValue, oldValue) => {
+    if (newValue === 'cell') return;
+    // 单列和数据表模式，默认选中当前数据表和当前视图
 
-      // 更新选项
-      groupList.value[index] = {
-        options: options || [],
-        name: _activeItem.name,
-        type: _activeItem.type,
-        id: _activeItem.id,
-        isShow: true,
-        value: '',
-      };
-    } else if (_activeItem.type === 7) {
-      groupList.value[index] = {
-        name: _activeItem.name,
-        type: _activeItem.type,
-        id: _activeItem.id,
-        isShow: true,
-        value: '1',
-      };
-    } else {
-      groupList.value[index] = {
-        name: _activeItem?.name,
-        type: _activeItem?.type,
-        id: _activeItem?.id,
-        isShow: true,
-        value: '',
-      };
-    }
-  };
+    const selection = await base.getSelection();
+    databaseId.value = selection.tableId;
 
-  const formDefaultUrl = ref();
+    if (newValue === 'field') {
+      fieldId.value = '';
+      fieldList.value = [];
+      viewId.value = '';
 
-  watchEffect(() => {
-    if (!rawUrl.value) {
-      formDefaultUrl.value = '';
+      const table = await base.getTable(databaseId.value);
+      viewList.value = await table.getViewMetaList();
+      viewId.value = selection.viewId;
     }
   });
 
-  /**
-   * @desc  : 生成转换后的地址
-   */
-  function generateFormDefaultUrl() {
-    if (!rawUrl.value) {
-      ElMessage({
-        message: t('Please fill in the form address first'),
-        type: 'error',
-        duration: 1500,
-        showClose: true,
-      });
-      return;
+  // 数据表修改后，自动获取视图列表
+  watchEffect(async () => {
+    const table = await base.getTable(databaseId.value);
+    viewList.value = await table.getViewMetaList();
+  });
+
+  base.onSelectionChange(async (event) => {
+    // 获取点击的字段id和记录id
+    currentFieldId.value = event.data.fieldId;
+    recordId.value = event.data.recordId;
+
+    // 获取当前数据表和视图
+    databaseId.value = event.data.tableId;
+    viewId.value = event.data.viewId;
+
+    // FIXME 数据表切换后，视图自动切换
+
+    const table = await base.getActiveTable();
+    if (currentFieldId.value && recordId.value) {
+      // 修改当前数据
+      let data = await table.getCellValue(currentFieldId.value, recordId.value);
+      if (data && data[0].text !== currentValue.value) {
+        currentValue.value = data[0].text;
+      }
     }
+  });
 
-    // const prefix = 'https://bcmcjimpjd.feishu.cn/share/base/form';
-
-    // if (!rawUrl.value.startsWith(prefix)) {
-    //   // rawUrl 不以指定前缀开始
-    //   ElMessage({
-    //     message: t('f1'),
-    //     type: 'error',
-    //     duration: 1500,
-    //     showClose: true,
-    //   });
-
-    //   return;
-    // }
-
-    console.log(groupList.value);
-
-    const queryParams = groupList.value
-      .map((item) => {
-        let processedValue;
-
-        switch (item.type) {
-          case 5:
-            processedValue = dayjs(item.value).format('YYYY/MM/DD HH:mm');
-            break;
-          case 3:
-            processedValue = item.value.name;
-            break;
-          case 4:
-            processedValue = item.value.map((i) => i.name).join(',');
-            break;
-          default:
-            processedValue = item.value.replace(/，/g, ',');
-        }
-
-        let _data;
-
-        // 是否隐藏问题
-        if (item.isShow) {
-          _data = `prefill_${encodeURIComponent(item.name)}=${encodeURIComponent(processedValue)}`;
-        } else {
-          _data = `prefill_${encodeURIComponent(item.name)}=${encodeURIComponent(
-            processedValue,
-          )}&hide_${encodeURIComponent(item.name)}=${encodeURIComponent(1)}`;
-        }
-
-        return _data;
-      })
-      .join('&');
-
-    if (queryParams) {
-      formDefaultUrl.value = rawUrl.value + `?${queryParams}`;
+  async function confirm() {
+    isLoading.value = true;
+    if (selectModel.value === 'cell') {
+      if (currentFieldId.value && recordId.value) {
+        await cellModel();
+      } else {
+        ElMessage({
+          type: 'error',
+          message: '请选择需要转换的单元格!',
+          duration: 1500,
+          showClose: true,
+        });
+      }
+    } else if (selectModel.value === 'field') {
+      if (fieldId.value) {
+        await fieldModel();
+      } else {
+        ElMessage({
+          type: 'error',
+          message: '请选择需要转换的字段!',
+          duration: 1500,
+          showClose: true,
+        });
+      }
     } else {
-      formDefaultUrl.value = rawUrl.value;
+      await databaseModel();
+    }
+    isLoading.value = false;
+  }
+
+  async function cellModel() {
+    ElMessage({
+      message: '开始转换数据~',
+      type: 'success',
+      duration: 1500,
+    });
+
+    const table = await base.getActiveTable();
+    let newValue = getNewValue(currentValue.value);
+
+    if (currentFieldId.value && recordId.value) {
+      await table.setCellValue(currentFieldId.value, recordId.value, newValue);
     }
 
     ElMessage({
-      message: t('Successful generation'),
+      message: '数据转换结束!',
       type: 'success',
       duration: 1500,
-      showClose: true,
     });
   }
 
-  const { toClipboard } = useClipboard();
+  async function fieldModel() {
+    ElMessage({
+      message: '开始转换数据~',
+      type: 'success',
+      duration: 1500,
+    });
 
-  async function copy() {
-    try {
-      // 复制
-      await toClipboard(formDefaultUrl.value);
-      ElMessage({
-        message: t('Copy Success'),
-        type: 'success',
-        duration: 1500,
-        showClose: true,
+    const table = await bitable.base.getTable(databaseId.value);
+
+    await getAllRecordList();
+    await getAllRecordIdList();
+
+    let _list = [];
+
+    for (let index = 0; index < recordList.length; index++) {
+      const field = await table.getFieldById(fieldId.value);
+      const cell = await field.getCell(recordIds[index]);
+      const val = await cell.getValue();
+
+      if (!val) continue;
+
+      let newValue = getNewValue(val[0]?.text);
+
+      // FIXME 处理数据
+      _list.push({
+        recordId: recordIds[index],
+        fields: {
+          [fieldId.value]: newValue,
+        },
       });
-      // 复制成功
-    } catch (e) {
-      // 复制失败
+    }
+
+    // FIXME 此处一次性全部替换
+    await table.setRecords(_list);
+
+    ElMessage({
+      message: '数据转换结束!',
+      type: 'success',
+      duration: 1500,
+    });
+  }
+
+  const recordIds = [];
+
+  async function getAllRecordIdList(_pageToken = 0) {
+    const table = await bitable.base.getTable(databaseId.value);
+    const data = await table.getRecordIdListByPage({ pageSize: 200, pageToken: _pageToken }); // 获取所有记录 id
+    const { total, hasMore, recordIds: recordIdsData, pageToken } = data;
+    recordIds.push(...recordIdsData);
+    if (hasMore) {
+      await getAllRecordIdList(pageToken);
     }
   }
 
-  function goUrl() {
-    window.open(formDefaultUrl.value, '_blank');
+  const recordList = [];
+  async function getAllRecordList(_pageToken = 0) {
+    const table = await bitable.base.getTable(databaseId.value);
+    const data = await table.getRecordListByPage({ pageSize: 200, pageToken: _pageToken });
+    const { total, hasMore, records: recordsData, pageToken } = data;
+    recordList.push(...recordsData);
+
+    if (hasMore) {
+      await getAllRecordList(pageToken);
+    }
   }
 
-  function more() {
-    window.open(
-      'https://www.feishu.cn/hc/zh-CN/articles/763023425825-%E8%AE%BE%E7%BD%AE%E8%A1%A8%E5%8D%95%E9%A2%84%E5%A1%AB%E9%BB%98%E8%AE%A4%E5%80%BC',
-      '_blank',
-    );
-  }
-
-  const collapse = ref('0');
-
-  // 筛选的字段列表
-  const groupFieldList = ref([]);
-
-  let table;
-  let view;
-
-  async function init() {
-    table = await bitable.base.getActiveTable();
-    view = await table.getActiveView();
-    let _fieldList = await view.getFieldMetaList();
-
-    groupFieldList.value = _fieldList.filter((item) =>
-      [1, 2, 3, 4, 5, 7, 11, 13, 15, 18, 21, 99001, 99002, 99003].includes(item.type),
-    );
-
-    groupFieldList.value = groupFieldList.value.map((item) => ({
-      name: item.name,
-      id: item.id,
-      type: item.type,
-      value: '',
-    }));
-  }
-
-  const selectOptColorInfo = ref();
-  onMounted(async () => {
-    await init();
-    selectOptColorInfo.value = await bitable.ui.getSelectOptionColorInfoList();
-
-    table.onFieldAdd(async (event) => {
-      isChange.value = true;
+  async function databaseModel() {
+    ElMessage({
+      message: '开始转换数据~',
+      type: 'success',
+      duration: 1500,
     });
 
-    table.onFieldModify(async (event) => {
-      isChange.value = true;
+    const table = await bitable.base.getTable(databaseId.value);
+    const _fieldList = await table.getFieldMetaList();
+
+    await getAllRecordList();
+    await getAllRecordIdList();
+
+    const filterFieldList = _fieldList.filter((item) => item.type === 1);
+
+    for (const item of filterFieldList) {
+      let _list = [];
+      for (let index = 0; index < recordList.length; index++) {
+        // 只遍历文本列
+        const field = await table.getFieldById(item.id);
+        const cell = await field.getCell(recordIds[index]);
+        const val = await cell.getValue();
+
+        if (val) {
+          let newValue = getNewValue(val[0]?.text);
+
+          // FIXME 处理数据
+          _list.push({
+            recordId: recordIds[index],
+            fields: {
+              [item.id]: newValue,
+            },
+          });
+        }
+      }
+
+      // FIXME 此处一次性全部替换
+      await table.setRecords(_list);
+    }
+
+    ElMessage({
+      message: '数据转换结束!',
+      type: 'success',
+      duration: 1500,
     });
-
-    table.onFieldDelete(async (event) => {
-      isChange.value = true;
-    });
-  });
-
-  const isChange = ref(false);
-
-  async function confirmRefresh() {
-    groupList.value = [];
-    let _fieldList = await view.getFieldMetaList();
-
-    groupFieldList.value = _fieldList.filter((item) =>
-      [1, 2, 3, 4, 5, 7, 11, 13, 15, 18, 21, 99001, 99002, 99003].includes(item.type),
-    );
-
-    groupFieldList.value = groupFieldList.value.map((item) => ({
-      name: item.name,
-      id: item.id,
-      type: item.type,
-      value: '',
-    }));
-
-    ElMessage.success(t('Refresh Successful'));
-    isChange.value = false;
   }
 
-  const level = ref<Level>('M');
-  const renderAs = ref<RenderAs>('canvas');
+  function getNewValue(value) {
+    let newValue;
+    if (target.value === 's') {
+      // 简体
+      newValue = opencc.taiwanToSimplifiedWithPhrases(value);
+    } else {
+      // 繁体
 
-  function downloadQr() {
-    const link = document.createElement('a');
-    link.download = t('Form default value address QR code');
-    link.href = (document.getElementById('qr-code') as HTMLCanvasElement).toDataURL();
-    link.click();
+      switch (traditionalModel.value) {
+        case '1':
+          // 正体繁体
+          newValue = opencc.simplifiedToTraditional(value);
+          break;
+        case '2':
+          // 台湾繁体
+          if (localModel.value === '1') {
+            newValue = opencc.simplifiedToTaiwan(value);
+          } else {
+            // 台湾地域
+            newValue = opencc.simplifiedToTaiwanWithPhrases(value);
+          }
+          break;
+        default:
+          // 香港繁体
+          newValue = opencc.simplifiedToHongKong(value);
+      }
+    }
+
+    return newValue;
   }
-
-  const dialogTableVisible = ref(false);
 </script>
 
 <template>
-  <div class="home">
-    <el-collapse
-      v-model="collapse"
-      class="collapse"
-    >
-      <!-- FIXME 筛选 -->
-      <el-collapse-item name="1">
-        <template #title>
-          <el-icon class="mr5"><InfoFilled /></el-icon>
-          <span class="collapse-title">{{ $t('More operational information') }}</span>
-        </template>
-        <div
-          class="tip"
-          style="margin-bottom: 0"
-        >
-          <div
-            class="tip-text"
-            style="margin-bottom: 0"
-          >
-            {{ $t('2') }}
-          </div>
-          <div
-            class="tip-text"
-            style="margin-bottom: 0"
-          >
-            {{ $t('4') }}
-          </div>
-
-          <div
-            class="tip-text"
-            style="margin-bottom: 0"
-          >
-            {{ $t('41') }}
-          </div>
-
-          <div
-            class="tip-text"
-            style="margin-bottom: 0"
-          >
-            {{ $t('51') }}
-          </div>
-
-          <div
-            @click="more"
-            class="more"
-          >
-            <div>
-              <DocDetail
-                theme="outline"
-                size="13"
-              />
-            </div>
-            <span>{{ $t('Check out the official documentation for an introduction') }}</span>
-          </div>
-        </div>
-      </el-collapse-item>
-    </el-collapse>
-
-    <template v-if="isChange">
-      <div class="tip-error">
-        <el-icon size="16"><Warning /></el-icon>
-        <span>{{ $t('note') }}</span>
-      </div>
-
-      <el-popconfirm
-        width="60vw"
-        :confirm-button-text="$t('Confirm')"
-        :cancel-button-text="$t('Cancel')"
-        @confirm="confirmRefresh"
-        :icon="InfoFilled"
-        icon-color="rgb(20, 86, 240)"
-        cancel-button-type="info"
-        :hide-after="50"
-        :title="$t('tttt')"
-      >
-        <template #reference>
-          <el-button
-            type="primary"
-            class="refresh"
-          >
-            <el-icon size="16"><Refresh /></el-icon>
-            <span>{{ $t('refresh') }}</span>
-          </el-button>
-        </template>
-      </el-popconfirm>
-    </template>
-
-    <div class="addView-line">
-      <div class="addView-line-label">{{ $t('Form address') }}</div>
-      <el-input
-        style="width: 75%"
-        v-model="rawUrl"
-        :title="rawUrl"
-        clearable
-        :placeholder="$t('Please enter the form address')"
-      />
-    </div>
-
+  <div class="s2t">
     <div>
-      <div class="collapse-line-list">
+      <div class="tip">
+        <div class="tip-text title">操作步骤:</div>
+
+        <div class="tip-text">1. 选择目标格式</div>
+        <div class="tip-text">2. 目标格式为繁体, 自行选择繁体标准和地域模式</div>
         <div
-          class="collapse-line"
-          v-for="(item, index) in groupList"
-          :key="item.id"
+          class="tip-text"
+          v-if="selectModel === 'cell'"
         >
-          <div
-            class="collapse-line-value line1"
-            style="width: 50%"
-          >
-            <!-- <el-input
-              v-if="item.isOtherFiled"
-              v-model="item.name"
-              :title="item.name"
-              clearable
-              :placeholder="$t('Please enter the name of the question')"
-            /> -->
-
-            <el-select
-              allow-create
-              default-first-option
-              style="width: 100%"
-              filterable
-              v-model="item.id"
-              :title="item.name"
-              @change="filterFiledChange(item, index)"
-            >
-              <el-option
-                v-for="field in groupFieldList"
-                :key="field.id"
-                :label="field.name"
-                :title="field.name"
-                :value="field.id"
-                :disabled="groupList.map((j) => j.id).includes(field.id)"
-              >
-                <field-icon :fieldType="field.type" />
-                <span>
-                  {{ field.name }}
-                </span>
-              </el-option>
-            </el-select>
-            <!-- 
-            <el-icon
-              class="edit"
-              size="20"
-              @click="
-                () => {
-                  item.isOtherFiled = true;
-                  item.name = '';
-                }
-              "
-              ><Edit
-            /></el-icon> -->
-          </div>
-
-          <!-- 值 -->
-          <div
-            class="collapse-line-value"
-            style="width: 50%"
-          >
-            <!-- FIXME 输入框 -->
-            <el-input
-              v-if="[1, 2, 11, 99003, 99002, 99001, 13, 15, 18, 21].includes(item.type)"
-              v-model="item.value"
-              :title="item.value"
-              :placeholder="$t('Please enter', [item.name])"
-              clearable
-            />
-
-            <!-- FIXME 单选 -->
-            <el-select
-              filterable
-              style="width: 100%"
-              v-else-if="item.type === 3"
-              v-model="item.value"
-              value-key="id"
-              :title="item?.options?.find((i) => i.id === item.value)?.name"
-              :placeholder="$t('Please select', [item.name])"
-            >
-              <el-option
-                v-for="j in item.options"
-                :key="j.id"
-                :label="j.name"
-                :value="j"
-              >
-                <span
-                  class="option-class"
-                  :style="{
-                    'background-color': selectOptColorInfo.find((x) => x.id === j.color)?.bgColor,
-                    color: selectOptColorInfo.find((y) => y.id === j.color)?.textColor,
-                  }"
-                >
-                  {{ j.name }}
-                </span>
-              </el-option>
-            </el-select>
-
-            <!-- FIXME 多选 -->
-            <el-select
-              filterable
-              style="width: 100%"
-              v-if="item.type === 4"
-              value-key="id"
-              multiple
-              collapse-tags
-              collapse-tags-tooltip
-              v-model="item.value"
-              :title="item?.options?.find((i) => i.id === item.value)?.name"
-              :placeholder="$t('Please select', [item.name])"
-            >
-              <el-option
-                v-for="j in item.options"
-                :key="j.id"
-                :label="j.name"
-                :value="j"
-              >
-                <span
-                  class="option-class"
-                  :style="{
-                    'background-color': selectOptColorInfo.find((x) => x.id === j.color)?.bgColor,
-                    color: selectOptColorInfo.find((y) => y.id === j.color)?.textColor,
-                  }"
-                >
-                  {{ j.name }}
-                </span>
-              </el-option>
-            </el-select>
-
-            <el-date-picker
-              v-else-if="item.type === 5"
-              style="width: 100%"
-              v-model="item.value"
-              type="datetime"
-              :placeholder="$t('Please select a date')"
-              format="YYYY/MM/DD HH:mm"
-            />
-
-            <el-select
-              style="width: 100%"
-              v-else-if="item.type === 7"
-              v-model="item.value"
-              :title="item.name"
-              :placeholder="$t('Please select', [item.name])"
-            >
-              <el-option
-                :label="$t('tick')"
-                value="1"
-              >
-                {{ $t('tick') }}
-              </el-option>
-
-              <el-option
-                :label="$t('unchecked')"
-                value="0"
-              >
-                {{ $t('unchecked') }}
-              </el-option>
-            </el-select>
-            <!-- suffix-icon="x" -->
-          </div>
-          <div class="show">
-            <template v-if="item.isShow">
-              <preview-open
-                @click="() => (item.isShow = !item?.isShow)"
-                class="option-btn"
-                theme="outline"
-                size="24"
-                fill="#333"
-                strokeLinecap="square"
-              />
-              <div style="color: #333">{{ $t('show') }}</div>
-            </template>
-
-            <template v-else>
-              <preview-close
-                @click="() => (item.isShow = !item?.isShow)"
-                class="option-btn"
-                theme="outline"
-                size="24"
-                fill="#bbbfc4"
-                strokeLinecap="square"
-              />
-
-              <div style="color: #bbbfc4">{{ $t('hide') }}</div>
-            </template>
-          </div>
-
-          <el-button
-            :icon="Close"
-            class="collapse-delete"
-            @click="() => groupList.splice(index, 1)"
-            text
-          />
+          3. 选择需要转换的单元格
         </div>
-      </div>
-      <el-button
-        v-if="groupFieldList.length > groupList.length"
-        class="add"
-        text
-        @click="addFilter"
-      >
-        <el-icon class="add-icon"><Plus /></el-icon>{{ $t('Adding default values') }}
-      </el-button>
-    </div>
-
-    <div class="default-url">
-      <el-button
-        type="primary"
-        @click="generateFormDefaultUrl"
-      >
-        <el-icon size="20"><CaretRight /></el-icon>
-        <span>{{ $t('Generate default value address') }}</span>
-      </el-button>
-      <div
-        class="default-url-text"
-        v-if="formDefaultUrl"
-      >
-        <div class="url-label">
-          <div
-            class="url-icon url-icon-preview"
-            @click="goUrl"
-          >
-            <BrowserSafari
-              size="16"
-              theme="outline"
-              strokeLinejoin="miter"
-              strokeLinecap="butt"
-            />
-            <span>{{ $t('Click to preview') }}</span>
-          </div>
-          <div
-            class="url-icon"
-            @click="copy"
-          >
-            <CopyLink
-              theme="outline"
-              size="16"
-            />
-            <span>{{ $t('Click to copy the address') }}</span>
-          </div>
-        </div>
-
-        <div class="qr-code-class">
-          <div class="qr-code-text">{{ $t('Scan code preview') }}</div>
-          <qrcode-vue
-            id="qr-code"
-            class="qr-code-img"
-            :value="formDefaultUrl"
-            :level="level"
-            :size="150"
-            :render-as="renderAs"
-          />
-          <div class="download-btn">
-            <el-button @click="downloadQr">
-              <el-icon><Download /></el-icon>
-              <span>{{ $t('download') }}</span>
-            </el-button>
-          </div>
-        </div>
-
-        <el-button
-          type="primary"
-          class="sponsor-code-btn"
-          @click="dialogTableVisible = true"
+        <div
+          class="tip-text"
+          v-else-if="selectModel === 'field'"
         >
-          <EmotionHappy
-            theme="outline"
-            size="20"
-            style="margin-right: 5px"
-          />
-          {{ $t('sponsor-code') }}
-        </el-button>
+          3. 选择顺序: 数据表 -> 视图 -> 字段
+        </div>
+        <div
+          class="tip-text"
+          v-else-if="selectModel === 'database'"
+        >
+          3. 选择需要转换的数据表
+        </div>
+        <div class="tip-text">4. 点击【确认转换】按钮即可</div>
       </div>
     </div>
 
-    <el-dialog
-      v-model="dialogTableVisible"
-      :title="$t('sponsor-people')"
-      width="65%"
+    <div class="label">
+      <div class="text">目标格式:</div>
+      <el-radio-group v-model="target">
+        <el-radio-button label="s">简体</el-radio-button>
+        <el-radio-button label="t">繁体</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <div
+      class="label"
+      v-if="target === 't'"
     >
-      <img
-        src="@/assets/sponsor-code.png"
-        alt=""
-        class="sponsor-code"
-      />
-    </el-dialog>
+      <div class="text">繁体标准:</div>
+      <el-radio-group v-model="traditionalModel">
+        <el-radio-button label="1">正体繁体</el-radio-button>
+        <el-radio-button label="2">台湾繁体</el-radio-button>
+        <el-radio-button label="3">香港繁体</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <!-- 台湾繁体才允许选择地域, 其他都默认不使用 -->
+    <div
+      class="label"
+      v-if="target === 't' && traditionalModel === '2'"
+    >
+      <div class="text">地域模式:</div>
+      <el-radio-group v-model="localModel">
+        <el-radio-button label="1">不使用</el-radio-button>
+        <el-radio-button label="2">台湾模式</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <div class="label">
+      <div class="text">选择模式:</div>
+      <el-radio-group v-model="selectModel">
+        <el-radio-button label="cell">单元格</el-radio-button>
+        <el-radio-button label="field">字段</el-radio-button>
+        <el-radio-button label="database">数据表</el-radio-button>
+      </el-radio-group>
+    </div>
+
+    <div
+      class="label"
+      v-if="selectModel !== 'cell'"
+    >
+      <div class="text">数据表:</div>
+      <el-select
+        v-model="databaseId"
+        placeholder="请选择数据表"
+        @change="databaseChange"
+        popper-class="selectStyle"
+      >
+        <el-option
+          v-for="item in databaseList"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"
+        />
+      </el-select>
+    </div>
+
+    <div
+      class="label"
+      v-if="selectModel === 'field'"
+    >
+      <div class="text">视图:</div>
+      <el-select
+        v-model="viewId"
+        placeholder="请选择视图"
+        popper-class="selectStyle"
+      >
+        <el-option
+          v-for="item in viewList"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"
+        />
+      </el-select>
+    </div>
+    <div
+      class="label"
+      v-if="selectModel === 'field'"
+    >
+      <div class="text">字段:</div>
+      <el-select
+        v-model="fieldId"
+        placeholder="请选择字段"
+        popper-class="selectStyle"
+      >
+        <el-option
+          v-for="item in fieldList"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"
+        />
+      </el-select>
+    </div>
+    <el-button
+      type="primary"
+      class="btn"
+      @click="confirm"
+      :loading="isLoading"
+    >
+      确认转换</el-button
+    >
   </div>
 </template>
 
 <style scoped>
-  .home {
-    font-size: 14px;
-  }
-
-  .addView-line {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    .addView-line-label {
-      margin-right: 10px;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-  }
-
-  .collapse-line-list {
-    margin: 10px 0;
-  }
-
-  .collapse-line {
-    display: flex;
-    flex-wrap: nowrap;
-    /* justify-content: space-between; */
-    margin-bottom: 10px;
-    /* height: 24px; */
-  }
-
-  .collapse-line-filed {
-    margin-right: 5px;
-  }
-
-  .collapse-line-other {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .collapse-line-value {
-    /* margin: 0 5px; */
-  }
-
-  .collapse-delete {
-    padding: 5px;
-    /* height: 24px; */
-  }
-
-  .default-url {
-    margin-top: 24px;
-  }
-
-  .default-url-text {
-    margin-top: 24px;
-  }
-
-  .url-label {
-    display: flex;
-    align-items: center;
-    .icon {
-      color: #245bdb;
-      padding: 2px;
-      &:hover {
-        cursor: pointer;
-        background-color: #3370ff1a;
-      }
-    }
-  }
-
-  .url {
-    display: inline-block;
-    margin-top: 10px;
-    max-width: 100%;
-    color: #245bdb;
-    word-wrap: break-word;
-    text-decoration: none;
-    white-space: normal;
-
-    &:hover {
-      opacity: 0.8;
-      cursor: pointer;
-      color: #3370ff;
-    }
-  }
-
-  .tip-error {
-    color: #f54a45;
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    line-height: 16px;
-    span {
-      margin: 0 3px;
-    }
-  }
-
-  .refresh {
-    margin: 10px 0;
+  .s2t {
+    font-family: LarkHackSafariFont, LarkEmojiFont, LarkChineseQuote, -apple-system, BlinkMacSystemFont, Helvetica Neue,
+      Tahoma, PingFang SC, Microsoft Yahei, Arial, Hiragino Sans GB, sans-serif, Apple Color Emoji, Segoe UI Emoji,
+      Segoe UI Symbol, Noto Color Emoji;
+    font-weight: 300;
   }
 
   .tip {
@@ -803,154 +466,59 @@
       margin-bottom: 8px;
     }
   }
-  .tip-icon {
-    position: relative;
-    top: 2px;
-  }
 
-  .cursor {
-    cursor: pointer;
-  }
-
-  .collapse {
-    margin-bottom: 14px;
-  }
-  .mr5 {
-    margin-right: 5px;
-  }
-
-  .more {
-    display: inline-flex;
-    align-items: center;
-    margin-top: 5px;
-    color: #1456f0;
-    cursor: pointer;
-
-    span {
-      /* margin-left: 5px; */
-      padding-left: 2px;
-    }
-
-    div {
-      position: relative;
-      top: 2px;
-    }
-  }
-
-  .url-icon {
-    display: inline-flex;
-    align-items: center;
-    font-size: 16px;
-    margin-right: 18px;
-    color: #1456f0;
-    &:hover {
-      cursor: pointer;
-    }
-
-    span {
-      padding-left: 4px;
-    }
-  }
-
-  .url-icon-preview {
-    position: relative;
-  }
-
-  .url-icon-preview::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -9px; /* 调整竖线的位置 */
-    height: 100%;
-    width: 1.5px; /* 竖线的宽度 */
-    background-color: rgba(31, 35, 41, 0.15); /* 竖线的颜色 */
-  }
-
-  .add-icon {
-    margin-right: 5px;
-  }
-
-  .add {
-    color: #1456f0 !important;
-    font-size: 16px;
-  }
-
-  .line1 {
-    margin-right: 12px;
+  .label {
     display: flex;
     align-items: center;
-  }
+    margin-bottom: 20px;
 
-  .edit {
-    margin: 0 10px 0 5px;
-    &:hover {
-      color: #1456f0 !important;
-      cursor: pointer;
+    .text {
+      width: 70px;
+      margin-right: 10px;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+      color: #fff;
+      background-color: rgb(20, 86, 240);
+      border-color: rgb(20, 86, 240);
+      box-shadow: 1px 0 0 0 rgb(20, 86, 240);
+    }
+
+    :deep(.el-radio-button__inner) {
+      font-weight: 300;
+    }
+
+    :deep(.el-radio-button__inner:hover) {
+      color: rgb(20, 86, 240);
+    }
+
+    :deep(.el-input__inner) {
+      font-weight: 300;
     }
   }
 
-  .qr-code-class {
-    margin-top: 20px;
-    display: inline-block;
-    text-align: center;
-    padding: 10px 12px;
-    border-radius: 6px;
-    background-color: #fff;
-    border: 1px solid #dee0e3;
-  }
-
-  .qr-code-text {
-    margin-bottom: 10px;
-    font-size: 16px;
-    color: #1f2329;
-  }
-
-  .download-btn {
-    margin-top: 10px;
-  }
-
-  .qr-code-img {
-    box-sizing: border-box;
-  }
-
-  .option-btn {
-    margin-right: 5px;
+  .btn {
+    margin-top: 14px;
+    background-color: rgb(20, 86, 240);
+    border-color: rgb(20, 86, 240);
+    font-weight: 300;
     &:hover {
-      cursor: pointer;
+      background-color: rgb(51, 109, 244);
+      border-color: rgb(20, 86, 240);
     }
-  }
-
-  .show {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    margin: 0 2px 0 8px;
-  }
-
-  .option-class {
-    padding: 2px 10px;
-    border-radius: 20px;
-  }
-
-  .sponsor-code {
-    /* width: 180px; */
-    width: 100%;
-    /* height: 180px; */
-  }
-
-  .sponsor-code-btn {
-    margin: 10px 0;
   }
 </style>
 
 <style>
-  .el-popper.is-customized {
-    padding: 6px 12px;
-    background: linear-gradient(90deg, rgb(159, 229, 151), rgb(204, 229, 129));
-  }
+  .selectStyle {
+    .el-select-dropdown__item {
+      font-weight: 300 !important;
+    }
 
-  .el-popper.is-customized .el-popper__arrow::before {
-    background: linear-gradient(45deg, #b2e68d, #bce689);
-    right: 0;
+    .el-select-dropdown__item.selected {
+      color: rgb(20, 86, 240);
+    }
   }
 </style>
