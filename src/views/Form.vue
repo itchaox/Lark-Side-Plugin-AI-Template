@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 16:05
+ * @LastTime   : 2025-02-21 16:14
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -440,12 +440,9 @@
 
 <style scoped>
   .markdown-preview {
-    font-family: LarkHackSafariFont, LarkEmojiFont, LarkChineseQuote, -apple-system, BlinkMacSystemFont, Helvetica Neue,
-      Tahoma, PingFang SC, Microsoft Yahei, Arial, Hiragino Sans GB, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-      Segoe UI Symbol, Noto Color Emoji;
-    font-weight: 300;
+    font-weight: 400;
     padding: 4px;
-    height: 100vh;
+    height: 96vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -471,7 +468,7 @@
     border: 1px solid #e5e6eb;
     border-radius: 4px;
     padding: 12px;
-    margin-top: 0;
+    margin-top: 6px;
     flex: 1;
     overflow-y: auto;
     min-height: 0;
@@ -528,9 +525,13 @@
 
   .preview-content :deep(ul),
   .preview-content :deep(ol) {
-    padding-left: 0.8em;
+    padding-left: 1.2em;
     margin: 0.6em 0;
     list-style-position: outside;
+  }
+
+  .preview-content :deep(ul) {
+    list-style-type: disc;
   }
 
   .preview-content :deep(ol) {
