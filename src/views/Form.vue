@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 16:00
+ * @LastTime   : 2025-02-21 16:05
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -395,6 +395,14 @@
       v-if="currentValue"
     >
       <div class="header-content">
+        <div class="cell-info">
+          <span
+            >当前字段：<strong>{{ currentFieldName }}</strong></span
+          >
+          <span
+            >当前行号：<strong>{{ currentRecordIndex + 1 }}</strong></span
+          >
+        </div>
         <div class="navigation-buttons">
           <el-button
             @click="switchRecord('prev')"
@@ -409,14 +417,6 @@
           >
             <span class="material-icons">下一个</span>
           </el-button>
-        </div>
-        <div class="cell-info">
-          <span
-            >当前字段：<strong>{{ currentFieldName }}</strong></span
-          >
-          <span
-            >当前行号：<strong>{{ currentRecordIndex + 1 }}</strong></span
-          >
         </div>
       </div>
     </div>
@@ -528,7 +528,7 @@
 
   .preview-content :deep(ul),
   .preview-content :deep(ol) {
-    padding-left: 1em;
+    padding-left: 0.8em;
     margin: 0.6em 0;
     list-style-position: outside;
   }
