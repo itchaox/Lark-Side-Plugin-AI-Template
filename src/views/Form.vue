@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 07:28
+ * @LastTime   : 2025-02-22 07:30
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -45,6 +45,12 @@
   const currentValue = ref();
   const currentRecordIndex = ref(0);
   const recordIds = ref([]);
+
+  // AI 问答模式字段 ID
+  const questionFieldId = ref('');
+  const answerFieldId = ref('');
+  const questionFieldName = ref('');
+  const answerFieldName = ref('');
 
   // 繁体模式 1 正体繁体; 2 台湾繁体; 3 香港繁体
   const traditionalModel = ref('1');
@@ -138,6 +144,19 @@
     fieldList.value = _list.filter((item) => item.type === 1);
   });
 
+  // 监听问答字段变化
+  watch([questionFieldId, answerFieldId], async () => {
+    if (previewMode.value === 'ai' && questionFieldId.value && answerFieldId.value && recordId.value) {
+      const table = await base.getActiveTable();
+      // 更新问答内容
+      const questionData = await table.getCellValue(questionFieldId.value, recordId.value);
+      const answerData = await table.getCellValue(answerFieldId.value, recordId.value);
+
+      questionContent.value = questionData?.[0]?.text || '';
+      parsedAnswerContent.value = md.render(answerData?.[0]?.text || '');
+    }
+  });
+
   // 切换选择模式时,重置选择
   watch(selectModel, async (newValue, oldValue) => {
     if (newValue === 'cell') return;
@@ -203,11 +222,18 @@
 
           questionContent.value = questionData?.[0]?.text || '';
           parsedAnswerContent.value = md.render(answerData?.[0]?.text || '');
+          currentValue.value = answerData?.[0]?.text || '';
 
           // 获取当前字段名称
           const field = await table.getFieldById(currentFieldId.value);
           const fieldMeta = await field.getMeta();
           currentFieldName.value = fieldMeta.name || '未知字段';
+
+          // 更新当前行号
+          const currentIndex = recordIds.value.findIndex((id) => id === recordId.value);
+          if (currentIndex !== -1) {
+            currentRecordIndex.value = currentIndex;
+          }
         } else {
           // 普通预览模式
           // 获取字段名称
@@ -437,11 +463,6 @@
 
     return newValue;
   }
-  // 问题字段和回答字段
-  const questionFieldId = ref('');
-  const answerFieldId = ref('');
-  const questionFieldName = ref('');
-  const answerFieldName = ref('');
 
   // 获取字段名称
   async function getFieldName(fieldId) {
@@ -817,7 +838,7 @@
   .field-selectors {
     display: flex;
     gap: 12px;
-    margin-bottom: 16px;
+    margin: 10px 0;
   }
 
   .field-selector {
