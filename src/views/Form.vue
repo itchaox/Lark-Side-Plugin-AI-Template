@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 16:23
+ * @LastTime   : 2025-02-21 17:04
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -14,6 +14,9 @@
   import { ElMessage, ElButton } from 'element-plus';
   import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
   import MarkdownIt from 'markdown-it';
+
+  import { useI18n } from 'vue-i18n';
+  const { t } = useI18n();
 
   // 目标格式 s 简体; t 繁体
   const target = ref('t');
@@ -403,10 +406,10 @@
       <div class="header-content">
         <div class="cell-info">
           <span
-            >当前字段：<strong style="color: #2955e7">{{ currentFieldName }}</strong></span
+            >{{ $t('preview.current_field') }}：<strong style="color: #2955e7">{{ currentFieldName }}</strong></span
           >
           <span
-            >当前行号：<strong style="color: #2955e7">{{ currentRecordIndex + 1 }}</strong></span
+            >{{ $t('preview.current_row') }}：<strong style="color: #2955e7">{{ currentRecordIndex + 1 }}</strong></span
           >
         </div>
         <div class="navigation-buttons">
@@ -415,7 +418,7 @@
             :disabled="!currentValue"
           >
             <el-icon style="font-size: 16px; font-weight: bold"><ArrowLeft /></el-icon>
-            <span class="material-icons">上一个</span>
+            <span class="material-icons">{{ $t('preview.navigation.prev') }}</span>
           </el-button>
           <el-button
             type="primary"
@@ -423,7 +426,7 @@
             :disabled="!currentValue"
             style="--el-button-bg-color: #2955e7; --el-button-border-color: #2955e7"
           >
-            <span class="material-icons">下一个</span>
+            <span class="material-icons">{{ $t('preview.navigation.next') }}</span>
             <el-icon style="font-size: 16px; font-weight: bold"><ArrowRight /></el-icon>
           </el-button>
         </div>
@@ -442,7 +445,7 @@
       v-else
       class="empty-state"
     >
-      <div class="empty-message">请选择一个<span style="color: #2955e7">单元格</span>以预览 Markdown 内容</div>
+      <div class="empty-message">{{ $t('preview.empty_state') }}</div>
     </div>
   </div>
 </template>

@@ -1,3 +1,12 @@
 {
-  "title":"title"
+  "title": "Title",
+  "preview": {
+    "empty_state": "Please select a cell to preview Markdown content",
+    "current_field": "Current Field",
+    "current_row": "Current Row",
+    "navigation": {
+      "prev": "Previous",
+      "next": "Next"
+    }
+  }
 }
