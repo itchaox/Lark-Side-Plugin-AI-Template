@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-21 16:14
+ * @LastTime   : 2025-02-21 16:17
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -433,12 +433,29 @@
       v-else
       class="empty-state"
     >
-      <div class="empty-message">请选择一个单元格以预览 Markdown 内容</div>
+      <div class="empty-message">请选择一个<span style="color: #1456f0;">单元格</span>以预览 Markdown 内容</div>
     </div>
   </div>
 </template>
 
 <style scoped>
+  .empty-message {
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .empty-message::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg t="1708589468695" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4120"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m32 664c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V456c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272z m-32-344c-26.5 0-48-21.5-48-48s21.5-48 48-48 48 21.5 48 48-21.5 48-48 48z" fill="%2386909C" p-id="4121"></path></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
   .markdown-preview {
     font-weight: 400;
     padding: 4px;
