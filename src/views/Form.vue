@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 08:25
+ * @LastTime   : 2025-02-22 08:35
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -568,10 +568,14 @@
     </div>
     <div v-if="currentValue">
       <div
+        class="cell-preview"
         v-if="previewMode === 'normal'"
-        class="preview-content cell-preview"
-        v-html="parsedContent"
-      ></div>
+      >
+        <div
+          class="preview-content"
+          v-html="parsedContent"
+        ></div>
+      </div>
       <div
         v-else
         class="preview-content ai-chat"
@@ -658,8 +662,9 @@
     margin-top: 6px;
     flex: 1;
     overflow-y: auto;
-    min-height: 0;
+    min-height: 50px;
     scroll-behavior: smooth;
+    max-height: 75vh;
   }
 
   .empty-state {
