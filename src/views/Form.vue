@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 12:49
+ * @LastTime   : 2025-02-22 13:36
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -988,6 +988,7 @@
   }
 
   .follow-button {
+    width: 85px;
     transition: transform 0.2s ease;
     background-color: #f472b6 !important;
     border-color: #f472b6 !important;
@@ -1000,7 +1001,8 @@
   }
 
   .sponsor-button {
-    width: 160px;
+    width: 85px;
+    margin-right: -5px;
     color: #ec5f59 !important;
     transition: transform 0.2s ease;
     background: linear-gradient(to right, #ffd75e, #ffcd38) !important;
