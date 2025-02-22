@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 12:46
+ * @LastTime   : 2025-02-22 12:49
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -493,51 +493,6 @@
 </script>
 
 <template>
-  <div class="header-buttons">
-    <el-button
-      type="primary"
-      class="sponsor-button"
-      @click="sponsorDialogVisible = true"
-    >
-      <el-icon
-        class="heart-icon"
-        style="margin-right: 4px"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-        >
-          <path
-            d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"
-          />
-        </svg>
-      </el-icon>
-      <span style="color: #020"> 赞助我 </span>
-    </el-button>
-    <el-button
-      type="primary"
-      @click="followAuthor"
-      class="follow-button"
-      style="--el-button-bg-color: #f472b6; --el-button-border-color: #f472b6"
-    >
-      <el-icon style="margin-right: 4px"
-        ><svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="w-6 h-6"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
-            clip-rule="evenodd"
-          /></svg
-      ></el-icon>
-      关注我
-    </el-button>
-  </div>
-
   <el-dialog
     v-model="sponsorDialogVisible"
     title="💗赞助我"
@@ -571,6 +526,51 @@
         <el-radio-button label="normal">{{ $t('preview.mode.normal') }}</el-radio-button>
         <el-radio-button label="ai">{{ $t('preview.mode.ai') }}</el-radio-button>
       </el-radio-group>
+
+      <div class="header-buttons">
+        <el-button
+          type="primary"
+          class="sponsor-button"
+          @click="sponsorDialogVisible = true"
+        >
+          <el-icon
+            class="heart-icon"
+            style="margin-right: 4px"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"
+              />
+            </svg>
+          </el-icon>
+          <span style="color: #020"> 赞助我 </span>
+        </el-button>
+        <el-button
+          type="primary"
+          @click="followAuthor"
+          class="follow-button"
+          style="--el-button-bg-color: #f472b6; --el-button-border-color: #f472b6"
+        >
+          <el-icon style="margin-right: 4px"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+                clip-rule="evenodd"
+              /></svg
+          ></el-icon>
+          关注我
+        </el-button>
+      </div>
     </div>
 
     <div
@@ -744,6 +744,11 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  .mode-switch {
+    display: flex;
+    justify-content: space-between;
   }
 
   .cell-info {
