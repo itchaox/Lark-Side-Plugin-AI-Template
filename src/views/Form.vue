@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 12:16
+ * @LastTime   : 2025-02-22 12:26
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -496,14 +496,31 @@
   <div class="header-buttons">
     <el-button
       type="primary"
+      class="sponsor-button"
       @click="sponsorDialogVisible = true"
       >赞助作者</el-button
     >
     <el-button
       type="primary"
       @click="followAuthor"
-      >关注作者</el-button
+      class="follow-button"
+      style="--el-button-bg-color: #f472b6; --el-button-border-color: #f472b6"
     >
+      <el-icon style="margin-right: 4px"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+            clip-rule="evenodd"
+          /></svg
+      ></el-icon>
+      关注作者
+    </el-button>
   </div>
 
   <el-dialog
@@ -650,7 +667,6 @@
   .header-buttons {
     margin-bottom: 1rem;
     display: flex;
-    justify-content: flex-end;
   }
 
   .sponsor-content {
@@ -932,5 +948,30 @@
 
   .field-selector {
     width: 320px;
+  }
+
+  .follow-button {
+    transition: transform 0.2s ease;
+    background-color: #f472b6 !important;
+    border-color: #f472b6 !important;
+  }
+
+  .follow-button:hover {
+    transform: scale(1.1);
+    background-color: #f472b6 !important;
+    border-color: #f472b6 !important;
+  }
+
+  .sponsor-button {
+    color: #020 !important;
+    transition: transform 0.2s ease;
+    background: linear-gradient(to right, #ffd75e, #ffcd38) !important;
+    border-color: #f8d76e !important;
+  }
+
+  .sponsor-button:hover {
+    transform: scale(1.1);
+    background: linear-gradient(to right, #ffd75e, #ffcd38) !important;
+    border-color: #f8d76e !important;
   }
 </style>
