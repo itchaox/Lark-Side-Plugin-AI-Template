@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 12:26
+ * @LastTime   : 2025-02-22 12:46
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -18,10 +18,10 @@
   import { useI18n } from 'vue-i18n';
   const { t } = useI18n();
 
-  // 赞助作者弹窗控制
+  // 赞助我弹窗控制
   const sponsorDialogVisible = ref(false);
 
-  // 关注作者函数
+  // 关注我函数
   function followAuthor() {
     window.open('https://space.bilibili.com/521041866', '_blank');
   }
@@ -498,8 +498,23 @@
       type="primary"
       class="sponsor-button"
       @click="sponsorDialogVisible = true"
-      >赞助作者</el-button
     >
+      <el-icon
+        class="heart-icon"
+        style="margin-right: 4px"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"
+          />
+        </svg>
+      </el-icon>
+      <span style="color: #020"> 赞助我 </span>
+    </el-button>
     <el-button
       type="primary"
       @click="followAuthor"
@@ -519,20 +534,31 @@
             clip-rule="evenodd"
           /></svg
       ></el-icon>
-      关注作者
+      关注我
     </el-button>
   </div>
 
   <el-dialog
     v-model="sponsorDialogVisible"
-    title="赞助作者"
-    width="30%"
+    title="💗赞助我"
+    width="95%"
   >
     <div class="sponsor-content">
-      <p>如果这个插件对你有帮助，欢迎赞助作者一杯咖啡 ☕️</p>
+      <p>如果这个插件对你有帮助，欢迎赞助我一杯咖啡 ☕️</p>
+      <p>感谢支持,二维码仅用于自愿赞助，不涉及任何商品或服务交易</p>
+
       <p>请扫描下方二维码进行赞助：</p>
       <!-- 这里需要替换成实际的赞助二维码图片 -->
-      <div class="qr-placeholder">二维码占位区域</div>
+      <div class="qr-placeholder">
+        <img
+          src="@/assets/wx.png"
+          alt=""
+        />
+        <img
+          src="@/assets/zfb.png"
+          alt=""
+        />
+      </div>
     </div>
   </el-dialog>
 
@@ -665,7 +691,7 @@
 
 <style scoped>
   .header-buttons {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     display: flex;
   }
 
@@ -678,14 +704,20 @@
   }
 
   .qr-placeholder {
-    width: 200px;
-    height: 200px;
     margin: 1rem auto;
-    border: 2px dashed #dcdfe6;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #909399;
+
+    img {
+      width: 180px;
+      height: 180px;
+
+      &:first-child {
+        margin-right: 30px;
+      }
+    }
   }
 
   .empty-message {
@@ -963,7 +995,8 @@
   }
 
   .sponsor-button {
-    color: #020 !important;
+    width: 160px;
+    color: #ec5f59 !important;
     transition: transform 0.2s ease;
     background: linear-gradient(to right, #ffd75e, #ffcd38) !important;
     border-color: #f8d76e !important;
@@ -973,5 +1006,23 @@
     transform: scale(1.1);
     background: linear-gradient(to right, #ffd75e, #ffcd38) !important;
     border-color: #f8d76e !important;
+  }
+
+  @keyframes heartbeat {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .heart-icon {
+    animation: heartbeat 1s infinite;
+    transform-origin: center;
+    display: inline-flex;
   }
 </style>
