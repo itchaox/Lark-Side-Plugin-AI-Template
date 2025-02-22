@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 07:58
+ * @LastTime   : 2025-02-22 08:19
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -500,30 +500,38 @@
       v-if="previewMode === 'ai'"
       class="field-selectors"
     >
-      <el-select
-        v-model="questionFieldId"
-        :placeholder="$t('preview.ai_chat.question_field')"
-        class="field-selector"
-      >
-        <el-option
-          v-for="field in fieldList.filter((field) => field.id !== answerFieldId)"
-          :key="field.id"
-          :label="field.name"
-          :value="field.id"
-        />
-      </el-select>
-      <el-select
-        v-model="answerFieldId"
-        :placeholder="$t('preview.ai_chat.answer_field')"
-        class="field-selector"
-      >
-        <el-option
-          v-for="field in fieldList.filter((field) => field.id !== questionFieldId)"
-          :key="field.id"
-          :label="field.name"
-          :value="field.id"
-        />
-      </el-select>
+      <div class="field-selector-group">
+        <span class="field-label">{{ $t('preview.ai_chat.question_field') }}</span>
+        <el-select
+          v-model="questionFieldId"
+          :placeholder="$t('preview.ai_chat.question_field')"
+          class="field-selector"
+          style="min-width: 100px"
+        >
+          <el-option
+            v-for="field in fieldList.filter((field) => field.id !== answerFieldId)"
+            :key="field.id"
+            :label="field.name"
+            :value="field.id"
+          />
+        </el-select>
+      </div>
+      <div class="field-selector-group">
+        <span class="field-label">{{ $t('preview.ai_chat.answer_field') }}</span>
+        <el-select
+          v-model="answerFieldId"
+          :placeholder="$t('preview.ai_chat.answer_field')"
+          class="field-selector"
+          style="min-width: 100px"
+        >
+          <el-option
+            v-for="field in fieldList.filter((field) => field.id !== questionFieldId)"
+            :key="field.id"
+            :label="field.name"
+            :value="field.id"
+          />
+        </el-select>
+      </div>
     </div>
     <div
       class="header-container"
@@ -811,13 +819,13 @@
 
   .question-content {
     background-color: #f5f6f7;
-    max-height: 10vh;
+    max-height: 6vh;
     font-size: 14px;
   }
 
   .answer-content {
     background-color: #f0f7ff;
-    max-height: 52vh;
+    max-height: 50vh;
   }
 
   .question-content p {
@@ -838,12 +846,25 @@
     }
   }
   .field-selectors {
+    /* display: flex; */
+    /* gap: 8px; */
+    margin: 8px 0;
+  }
+
+  .field-selector-group {
     display: flex;
-    gap: 12px;
-    margin: 10px 0;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .field-label {
+    color: #1f2329;
+    font-size: 14px;
+    white-space: nowrap;
   }
 
   .field-selector {
-    width: 200px;
+    width: 320px;
   }
 </style>
