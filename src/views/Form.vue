@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 11:40
+ * @LastTime   : 2025-02-22 12:16
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -11,12 +11,20 @@
   import { bitable } from '@lark-base-open/js-sdk';
 
   import opencc from 'node-opencc';
-  import { ElMessage, ElButton } from 'element-plus';
+  import { ElMessage, ElButton, ElDialog } from 'element-plus';
   import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
   import MarkdownIt from 'markdown-it';
 
   import { useI18n } from 'vue-i18n';
   const { t } = useI18n();
+
+  // 赞助作者弹窗控制
+  const sponsorDialogVisible = ref(false);
+
+  // 关注作者函数
+  function followAuthor() {
+    window.open('https://space.bilibili.com/521041866', '_blank');
+  }
 
   // 预览模式：normal 普通预览; ai AI问答
   const previewMode = ref('normal');
@@ -485,6 +493,32 @@
 </script>
 
 <template>
+  <div class="header-buttons">
+    <el-button
+      type="primary"
+      @click="sponsorDialogVisible = true"
+      >赞助作者</el-button
+    >
+    <el-button
+      type="primary"
+      @click="followAuthor"
+      >关注作者</el-button
+    >
+  </div>
+
+  <el-dialog
+    v-model="sponsorDialogVisible"
+    title="赞助作者"
+    width="30%"
+  >
+    <div class="sponsor-content">
+      <p>如果这个插件对你有帮助，欢迎赞助作者一杯咖啡 ☕️</p>
+      <p>请扫描下方二维码进行赞助：</p>
+      <!-- 这里需要替换成实际的赞助二维码图片 -->
+      <div class="qr-placeholder">二维码占位区域</div>
+    </div>
+  </el-dialog>
+
   <div class="markdown-preview">
     <div class="mode-switch">
       <el-radio-group
@@ -613,6 +647,31 @@
 </template>
 
 <style scoped>
+  .header-buttons {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .sponsor-content {
+    text-align: center;
+  }
+
+  .sponsor-content p {
+    margin-bottom: 1rem;
+  }
+
+  .qr-placeholder {
+    width: 200px;
+    height: 200px;
+    margin: 1rem auto;
+    border: 2px dashed #dcdfe6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #909399;
+  }
+
   .empty-message {
     font-size: 1.2em;
     display: flex;
