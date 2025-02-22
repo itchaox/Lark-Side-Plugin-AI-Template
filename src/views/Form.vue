@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 07:30
+ * @LastTime   : 2025-02-22 07:58
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -558,20 +558,20 @@
         </div>
       </div>
     </div>
-    <div
-      class="cell-preview"
-      v-if="currentValue"
-    >
+    <div v-if="currentValue">
       <div
         v-if="previewMode === 'normal'"
-        class="preview-content"
+        class="preview-content cell-preview"
         v-html="parsedContent"
       ></div>
       <div
         v-else
         class="preview-content ai-chat"
       >
-        <div class="question-content">
+        <div
+          class="question-content"
+          :title="questionContent"
+        >
           <span class="tag question-tag">问题</span>
           <p>{{ questionContent }}</p>
         </div>
@@ -773,7 +773,7 @@
   .ai-chat {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 5px;
   }
 
   .question-content,
@@ -781,9 +781,8 @@
     padding: 24px 16px 16px;
     border-radius: 8px;
     position: relative;
-    max-height: 300px;
     overflow-y: auto;
-    margin-top: 16px;
+    margin-top: 8px;
   }
 
   .tag {
@@ -812,10 +811,13 @@
 
   .question-content {
     background-color: #f5f6f7;
+    max-height: 10vh;
+    font-size: 14px;
   }
 
   .answer-content {
     background-color: #f0f7ff;
+    max-height: 52vh;
   }
 
   .question-content p {
