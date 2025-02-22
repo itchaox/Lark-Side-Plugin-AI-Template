@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 13:36
+ * @LastTime   : 2025-02-22 13:40
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -749,6 +749,18 @@
   .mode-switch {
     display: flex;
     justify-content: space-between;
+
+    :deep(.el-radio-button__inner) {
+      &:hover {
+        color: #2955e7;
+      }
+    }
+
+    :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+      background-color: #2955e7 !important;
+      border-color: #2955e7 !important;
+      box-shadow: -1px 0 0 0 #2955e7 !important;
+    }
   }
 
   .cell-info {
