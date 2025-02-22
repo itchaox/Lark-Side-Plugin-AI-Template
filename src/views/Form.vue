@@ -3,7 +3,7 @@
  * @Author     : itchaox
  * @Date       : 2023-09-26 15:10
  * @LastAuthor : Wang Chao
- * @LastTime   : 2025-02-22 08:19
+ * @LastTime   : 2025-02-22 08:25
  * @desc       : Markdown 预览插件
 -->
 <script setup>
@@ -641,7 +641,7 @@
     padding: 8px;
     background-color: #f5f7fa;
     border-radius: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     font-size: 14px;
     color: #1f2329;
     font-weight: 600;
@@ -848,7 +848,7 @@
   .field-selectors {
     /* display: flex; */
     /* gap: 8px; */
-    margin: 8px 0;
+    margin-top: 8px;
   }
 
   .field-selector-group {
